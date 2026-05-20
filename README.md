@@ -106,7 +106,7 @@ This tool is intended for:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/networkkiller.git
+git clone https://github.com/mrch4n725/networkkiller.git
 cd networkkiller
 ```
 
@@ -125,7 +125,7 @@ Or simply run the script and it will attempt automatic installation.
 ### Run the Script
 
 ```bash
-sudo python3 network_killa.py
+sudo python3 phantommesh.py
 ```
 
 ### Typical Workflow
@@ -251,7 +251,8 @@ MIT License
 ---
 ### Credits
 Original (basic) Concept & Core Implementation:
-https://github.com/abbisQQ/Python-Kivy-Network-Killer
+ https://github.com/abbisQQ/Python-Kivy-Network-Killer
+
 Created and originally developed by:
 
 @abbisQQ
