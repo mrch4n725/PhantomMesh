@@ -17,7 +17,7 @@ Use this project **only** in:
 
 ## Overview
 
-`NetworkKiller` is a Python-based network experimentation toolkit that demonstrates several low-level networking concepts using the Scapy packet manipulation framework.
+`PhantomMesh` is a Python-based network experimentation toolkit that demonstrates several low-level networking concepts using the Scapy packet manipulation framework.
 
 The project includes:
 
