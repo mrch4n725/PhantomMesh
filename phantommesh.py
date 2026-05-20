@@ -58,7 +58,7 @@ class NetworkKiller:
         print("""
 ╔══════════════════════════════════════════════╗
 ║                                              ║
-║            NETWORK KILLER v2.0               ║
+║            Phantom Mesh -v1.0-               ║
 ║     Destroy and Cripple Internet Access      ║
 ║                                              ║
 ╚══════════════════════════════════════════════╝
