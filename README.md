@@ -106,8 +106,8 @@ This tool is intended for:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/mrch4n725/networkkiller.git
-cd networkkiller
+git clone https://github.com/mrch4n725/PhantomMesh.git
+cd PhantomMesh
 ```
 
 ### Install Dependencies
@@ -143,7 +143,7 @@ sudo python3 phantommesh.py
 ## Project Structure
 
 ```text
-phantom_mesh.py
+phantommesh.py
 README.md
 ```
 
