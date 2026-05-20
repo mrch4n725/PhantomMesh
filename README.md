@@ -1,6 +1,5 @@
 # PhantomMesh
 Advanced Network Traffic Manipulation &amp; Protocol Experimentation Framework
-# NetworkKiller v2.0
 
 > **Educational network analysis and packet-crafting toolkit built with Scapy**
 
