@@ -145,6 +145,12 @@ sudo python3 phantommesh.py
 ```text
 phantommesh.py
 README.md
+
+📂 PhantomMesh (Root)
+ ├── 📄 README.md              <-- You are here
+ ├── 🐍 phantommesh.py          <-- Core Framework
+ └── 🗃️ corrupted_holocron     <-- [🔒 LOCKED: DATA SECTOR B64]
+
 ```
 
 ---
@@ -253,7 +259,7 @@ MIT License
 Original (basic) Concept & Core Implementation:
  https://github.com/abbisQQ/Python-Kivy-Network-Killer
 
-Created and originally developed by:
+Original basic creation and concept by:
 
 @abbisQQ
 ---
@@ -264,4 +270,5 @@ Built using:
 * Scapy
 * Python networking libraries
 * Linux networking utilities
-* This description summarised with (Don't hate, I just have no time to write something like this ;) )
+* Claude and Github copilot
+* This description summarised with AI (Don't hate, I just have no time to write something like this and atleast i'm honest ;] )
